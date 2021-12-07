@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
+const { compile } = require("ejs");
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs") 
@@ -46,7 +47,12 @@ app.post("/urls", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
   });
-
+  app.post("/urls/:shortURL",(req, res)=>{
+  const shortURL = req.params.shortURL;
+  const longURL = req.body.longUrl;
+    urlDatabase[shortURL] = longURL;
+    res.redirect('/urls');
+  });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
