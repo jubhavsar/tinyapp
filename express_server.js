@@ -55,7 +55,7 @@ function generateRandomString() {
   let randomChars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
-  for (var i = 0; i < 6; i++) {
+  for (let i = 0; i < 6; i++) {
     result += randomChars.charAt(
       Math.floor(Math.random() * randomChars.length)
     );
@@ -87,17 +87,18 @@ function urlsForUser(id) {
 }
 // ROUTES (req, res) => {}
 app.get("/", (req, res) => {
-  res.send("Hello! Welcome to Tinyapp.");
+  return res.render('urls_error',{user: null, message:"Hello! Welcome to Tinyapp."});
+  //res.send("Hello! Welcome to Tinyapp.");
 });
 app.get("/urls", (req, res) => {
   const user_Id = req.session.user_Id;
   if (!user_Id) {
-    return res.redirect("/login");
+    return res.render('urls_error',{user: null, message:"Please login first"});
   }
 
   const user = users[user_Id];
   if (!user) {
-    return res.redirect("/login");
+    return res.render('urls_error',{user: null, message:"Please login first"});
   }
 
   const userUrls = urlsForUser(user.id);
@@ -165,8 +166,10 @@ app.get("/u/:shortURL", (req, res) => {
   if (!urlObject) {
     return res.status(400).send("There is no url is shortURL");
   }
+
   res.redirect(urlObject.longURL);
 });
+
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const user_Id = req.session.user_Id;
@@ -175,6 +178,7 @@ app.post("/urls/:shortURL", (req, res) => {
     longURL: req.body.longURL,
     userID: user_Id,
   };
+
   res.redirect("/urls");
 });
 
@@ -189,20 +193,21 @@ app.post("/login", (req, res) => {
   // extract the info from the form
   const email = req.body.email;
   const password = req.body.password;
+
   if (getUserByEmail(email, users)) {
     // Authenticate the user
     const key = passwordLookUp(password, users);
     req.session.user_Id = `${key}`;
     res.redirect("/urls");
   } else {
-    // otherwise we send an error message
-    res.send("Enter correct email and password");
+    return res.render('urls_error',{user: null, message:"Enter correct email and password."});
   }
 });
 
 // Display the login form
 app.get("/login", (req, res) => {
   const user_Id = req.session.user_Id;
+
   const user = users[user_Id];
   const templateVars = { user: user };
   if (user) {
@@ -235,12 +240,12 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
 
-  if (email === "" || hashedPassword === "") {
-    res.send("Enter correct email and password");
+  if (email === "" || password === "") {
+        return res.render('urls_error',{user: null, message:"Enter correct email and password"});
 
-    // check if the user is not already in the database
-  } else if (getUserByEmail(email, users)) {
-    res.send("Email already exist");
+    // check if the user is already in the database
+  } else if (getUserByEmail(email, users) && passwordLookUp(password, users)) {
+    return res.render('urls_error',{user: null, message:"Email already exist"});
   }
   const user_Id = generateRandomString();
   users[user_Id] = {
